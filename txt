@@ -1,0 +1,70 @@
+JARVIS/
+│
+├── main.py                 # Startpunkt
+├── config.py               # Einstellungen
+├── requirements.txt
+├── .env
+│
+├── voice/
+│   ├── wakeword.py
+│   ├── listen.py
+│   ├── stt.py              # Whisper
+│   ├── tts.py              # Edge-TTS
+│   └── audio.py
+│
+├── agent/
+│   ├── brain.py            # Hermes/Ollama
+│   ├── planner.py
+│   ├── memory.py
+│   ├── prompts.py
+│   └── conversation.py
+│
+├── tools/
+│   ├── computer.py
+│   ├── browser.py
+│   ├── files.py
+│   ├── apps.py
+│   ├── music.py
+│   ├── clipboard.py
+│   └── system.py
+│
+├── ui/
+│   ├── hud.py
+│   └── tray.py
+│
+├── data/
+│   ├── memory.json
+│   ├── settings.json
+│   └── logs/
+│
+└── utils/
+    ├── logger.py
+    └── helpers.py
+🎤 Mikrofon
+      │
+      ▼
+Wake Word ("Jarvis")
+      │
+      ▼
+Speech-to-Text (Whisper)
+      │
+      ▼
+Hermes + Qwen2.5 (Ollama)
+      │
+      ├────────► Memory
+      │
+      ├────────► Planner
+      │
+      └────────► Tool Router
+                     │
+      ┌──────────────┼──────────────┐
+      ▼              ▼              ▼
+ Computer        Browser        Dateien
+      │              │              │
+      └──────────────┼──────────────┘
+                     ▼
+           Ergebnis an Hermes
+                     ▼
+        Text-to-Speech (Edge TTS)
+                     ▼
+                🔊 Lautsprecher
