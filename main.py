@@ -1,7 +1,7 @@
 from config import ASSISTANT_NAME, VERSION
 from utils.logger import setup_logger
 from agent.brain import Brain
-
+from agent.conversation import Conversation
 
 def main():
 
@@ -10,8 +10,11 @@ def main():
     print("=" * 40)
     print(f"{ASSISTANT_NAME} {VERSION}")
     print("=" * 40)
+    print('')
+    print('Typing "exit", "quit" or "tschüss" will end the conversation.')
 
     brain = Brain()
+    conversation = Conversation(brain)
 
     while True:
 
@@ -21,7 +24,7 @@ def main():
             print("JARVIS: Bis später!")
             break
 
-        answer = brain.ask(user)
+        answer = conversation.ask(user)
 
         print(f"\nJARVIS: {answer}")
 
