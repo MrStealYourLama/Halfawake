@@ -1,3 +1,5 @@
+from agent.prompts import SYSTEM_PROMPT
+
 class Conversation:
 
     def __init__(self, brain):
@@ -13,7 +15,7 @@ class Conversation:
         context = "\n".join(self.history)
 
         prompt = f"""
-Du bist JARVIS, ein intelligenter KI-Assistent.
+        {SYSTEM_PROMPT}
 
 Gespräch:
 {context}
