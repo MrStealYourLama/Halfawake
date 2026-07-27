@@ -1,7 +1,9 @@
+
 from config import ASSISTANT_NAME, VERSION
 from utils.logger import setup_logger
 from agent.brain import Brain
 from agent.conversation import Conversation
+from agent.memory import Memory
 
 def main():
 
@@ -15,6 +17,11 @@ def main():
 
     brain = Brain()
     conversation = Conversation(brain)
+    memory = Memory()
+    memory.set("name", "Leo")
+
+    print(memory.get("name"))
+
 
     while True:
 
