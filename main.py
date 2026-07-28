@@ -16,11 +16,8 @@ def main():
     print('Typing "exit", "quit" or "tschüss" will end the conversation.')
 
     brain = Brain()
-    conversation = Conversation(brain)
     memory = Memory()
-    memory.set("name", "Leo")
-
-    print(memory.get("name"))
+    conversation = Conversation(brain, memory)
 
 
     while True:

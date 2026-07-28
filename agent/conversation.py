@@ -2,8 +2,9 @@ from agent.prompts import SYSTEM_PROMPT
 
 class Conversation:
 
-    def __init__(self, brain):
+    def __init__(self, brain, memory):
         self.brain = brain
+        self.memory = memory
         self.history = []
 
     def ask(self, user_input: str):
@@ -12,10 +13,16 @@ class Conversation:
             f"User: {user_input}"
         )
 
+        self.check_memory(user_input)
+
         context = "\n".join(self.history)
+        memory_data = self.memory.load()
 
         prompt = f"""
-        {SYSTEM_PROMPT}
+{SYSTEM_PROMPT}
+
+Gespeichertes Wissen:
+{memory_data}
 
 Gespräch:
 {context}
@@ -32,5 +39,11 @@ JARVIS:
         return response
 
 
+    def check_memory(self, user_input):
+
+        if user_input.startswith("Ich heiße "):
+            name = user_input[10:]
+            self.memory.set("name", name)
+    
     def clear(self):
         self.history = []
