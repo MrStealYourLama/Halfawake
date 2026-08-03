@@ -44,6 +44,10 @@ JARVIS:
         if user_input.startswith("Ich heiße "):
             name = user_input[10:]
             self.memory.set("name", name)
-    
+
+        elif user_input.startswith("Meine Lieblingsfarbe ist "):
+            color = user_input[25:]
+            self.memory.set("favorite_color", color)
+
     def clear(self):
         self.history = []
