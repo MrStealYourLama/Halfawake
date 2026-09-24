@@ -30,6 +30,23 @@ class Memory:
         data[key] = value
         self.save(data)
 
+    def add(self, key, value):
+        data = self.load()
+        existing = data.get(key)
+
+        if existing is None:
+            values = []
+        elif isinstance(existing, list):
+            values = existing
+        else:
+            values = [existing]
+
+        if value not in values:
+            values.append(value)
+
+        data[key] = values
+        self.save(data)
+
     def delete(self, key):
         data = self.load()
 
