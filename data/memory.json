@@ -1,4 +1,8 @@
 {
     "name": "Leo",
-    "favorite_color": "Braun"
+    "favorite_color": "Braun",
+    "hobbies": [
+        "Schlagzeug",
+        "Skateboarden"
+    ]
 }

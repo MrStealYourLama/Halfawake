@@ -10,6 +10,7 @@ class MemoryDecision:
     """A proposed memory update; this class never persists the information."""
 
     should_store: bool
+    action: str = "ignore"
     key: str | None = None
     value: str | None = None
     reason: str = ""
@@ -21,48 +22,44 @@ class MemoryAnalyzer:
     def __init__(self, brain):
         self.brain = brain
 
-    def analyze(self, user_message: str) -> MemoryDecision:
+    def analyze(self, user_message: str, existing_memory: dict | None = None) -> MemoryDecision:
         """Return a structured storage decision for one user message."""
+        memory_context = json.dumps(
+            existing_memory if isinstance(existing_memory, dict) else {},
+            ensure_ascii=False,
+        )
         prompt = f"""
 Du analysierst Benutzernachrichten für ein langfristiges persönliches Memory.
-Entscheide selbst, ob die Nachricht langfristig relevante Information enthält
-und welche knappe Information daraus gespeichert werden sollte. Speichere nur
-stabile persönliche Angaben, Vorlieben, Interessen oder Ziele. Speichere keine
-Fragen, einmaligen Aktivitäten, kurzfristigen Ereignisse oder situativen Angaben.
+Entscheide selbst, ob eine Nachricht stabile persönliche Angaben, Vorlieben,
+Interessen oder Ziele enthält. Speichere keine Fragen, einmaligen Aktivitäten,
+kurzfristigen Ereignisse oder situativen Angaben.
 
-Wähle für speicherbare Informationen einen kurzen, eindeutigen snake_case-Schlüssel.
-Der Schlüssel beschreibt die Art der Information, nicht ihren konkreten Wert.
-Verwende bevorzugt eine passende Kategorie aus dieser Liste und nutze dieselbe
-Kategorie für gleichartige Informationen:
-- name: Name des Benutzers
-- favorite_color: Lieblingsfarbe
-- hobbies: dauerhafte Hobbys und Aktivitäten, die der Benutzer gerne ausübt
-- music_preferences: bevorzugte Künstler, Bands und Musikrichtungen
-- goals: persönliche Ziele und angestrebte Berufe
+Aktuelles Memory (JSON):
+{memory_context}
 
-Beispiele für konsistente Kategorien:
-- „Ich heiße Leo“ -> key „name“, value „Leo“
-- „Meine Lieblingsfarbe ist Blau“ -> key „favorite_color“, value „Blau“
-- „Ich skate sehr gerne“ -> key „hobbies“, value „Skateboarden“
-- „Ich spiele gerne Schlagzeug“ -> key „hobbies“, value „Schlagzeug“
-- „Ich liebe Måneskin“ -> key „music_preferences“, value „Måneskin“
-- „Ich möchte später Ingenieur werden“ -> key „goals“, value „Ingenieur werden“
+Nutze das bestehende Memory, um die Aktion zu bestimmen:
+- "create": neue langfristige Information, für die noch kein passender Schlüssel besteht
+- "update": eine vorhandene Information wird ausdrücklich korrigiert oder ersetzt
+- "add": ein weiterer eigenständiger Wert gehört zu einer bestehenden Mehrfach-Kategorie
+- "ignore": die Nachricht enthält keine langfristig relevante Information
 
-Wenn keine vorhandene Kategorie passt, darfst du eine neue sinnvolle Kategorie
-erstellen. Teile Kategorien nicht unnötig auf, verwende keine Synonyme oder
-verschiedene Schlüssel für dieselbe Kategorie und erfinde keine übermäßig
-spezifischen Kategorien.
+Erfinde keine Informationen. Wiederverwende passende bestehende Schlüssel und
+deren Bedeutung. Wenn kein Schlüssel passt, erstelle einen kurzen, eindeutigen
+snake_case-Schlüssel für die neue Kategorie. Beschränke dich nicht auf eine
+vorgegebene Kategorienliste und teile gleichartige Informationen nicht unnötig
+auf. Bei "add" gib nur den neuen Wert zurück; Memory fügt ihn zum vorhandenen
+Wert hinzu. Entscheide bei "update" anhand der Nachricht und des Memory-Kontexts,
+welcher vorhandene Wert ersetzt wird.
 
-Gib ausschließlich ein JSON-Objekt in diesem Format zurück:
-{{"should_store": true, "key": "kurzer_snake_case_schlüssel", "value": "knappe Information", "reason": "kurze Begründung"}}
-Bei nicht relevanten Nachrichten muss should_store false sein und key sowie value
-müssen null sein. Erfinde keine Informationen und übernimm nur Angaben aus der
-Nachricht. Beispiele:
-- "Ich heiße Leo" -> key "name", value "Leo"
-- "Meine Lieblingsfarbe ist Blau" -> key "favorite_color", value "Blau"
-- "Ich skate sehr gerne" -> key "hobbies", value "Skateboarden"
-- "Ich war heute 3 Stunden skaten" -> nicht speichern
-- "Was für ein Wetter heute?" -> nicht speichern
+Gib ausschließlich ein valides JSON-Objekt in diesem Format zurück:
+{{"should_store": true, "action": "create", "key": "kurzer_snake_case_schlüssel", "value": "knappe Information", "reason": "kurze Begründung"}}
+Bei nicht relevanten Nachrichten muss should_store false sein, action muss "ignore" sein und key sowie value müssen null sein. Bei speicherbaren Nachrichten muss should_store true sein und action "create", "update" oder "add" sein. Erfinde keine Informationen und übernimm nur Angaben aus der Nachricht. Beispiele:
+- "Ich heiße Leo" -> action "create", key "name", value "Leo"
+- Wenn das Memory bereits `{{"hobbies": ["Skateboarden"]}}` enthält und der Benutzer "Ich spiele auch Schlagzeug" sagt -> action "add", key "hobbies", value "Schlagzeug"
+- Wenn das Memory `{{"name": "Leo"}}` enthält und der Benutzer seinen Namen ausdrücklich korrigiert -> action "update", key "name", value mit dem korrigierten Namen
+- Eine neue, bisher nicht gespeicherte langfristige Angabe -> action "create" mit einem passenden neuen oder bestehenden Kategorie-Schlüssel
+- "Ich war heute 3 Stunden skaten" -> should_store false, action "ignore"
+- "Was für ein Wetter heute?" -> should_store false, action "ignore"
 
 Benutzernachricht:
 {user_message}
@@ -74,8 +71,15 @@ Benutzernachricht:
         except (TypeError, ValueError, KeyError):
             return MemoryDecision(False, reason="Keine gültige Analyzer-Antwort")
 
+        action = data.get("action")
+        if not isinstance(action, str) or action not in {"create", "update", "add", "ignore"}:
+            return MemoryDecision(False, reason="Ungültige Speicheraktion")
+
         if data.get("should_store") is not True:
             return MemoryDecision(False, reason=self._string(data.get("reason")))
+
+        if action == "ignore":
+            return MemoryDecision(False, reason="Ungültige Speicheraktion")
 
         key = self._string(data.get("key")).strip()
         value = self._string(data.get("value")).strip()
@@ -84,6 +88,7 @@ Benutzernachricht:
 
         return MemoryDecision(
             should_store=True,
+            action=action,
             key=key,
             value=value,
             reason=self._string(data.get("reason")),

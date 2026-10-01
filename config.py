@@ -3,7 +3,7 @@
 # ==============================
 
 # Name des Assistenten
-ASSISTANT_NAME = "JARVIS"
+ASSISTANT_NAME = "Halfawake"
 
 # Version
 VERSION = "0.2.0"

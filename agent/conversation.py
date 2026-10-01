@@ -1,10 +1,12 @@
 from agent.prompts import SYSTEM_PROMPT
+from agent.memory_analyzer import MemoryAnalyzer
 
 class Conversation:
 
     def __init__(self, brain, memory):
         self.brain = brain
         self.memory = memory
+        self.memory_analyzer = MemoryAnalyzer(brain)
         self.history = []
 
     def ask(self, user_input: str):
@@ -13,7 +15,8 @@ class Conversation:
             f"User: {user_input}"
         )
 
-        self.check_memory(user_input)
+        decision = self.memory_analyzer.analyze(user_input, self.memory.load())
+        self.memory.apply_decision(decision)
 
         context = "\n".join(self.history)
         memory_data = self.memory.load()
@@ -37,17 +40,5 @@ JARVIS:
         )
 
         return response
-
-
-    def check_memory(self, user_input):
-
-        if user_input.startswith("Ich heiße "):
-            name = user_input[10:]
-            self.memory.set("name", name)
-
-        elif user_input.startswith("Meine Lieblingsfarbe ist "):
-            color = user_input[25:]
-            self.memory.set("favorite_color", color)
-
     def clear(self):
         self.history = []

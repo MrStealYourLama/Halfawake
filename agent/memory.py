@@ -53,3 +53,15 @@ class Memory:
         if key in data:
             del data[key]
             self.save(data)
+
+    def apply_decision(self, decision):
+        if not decision.should_store or decision.action == "ignore":
+            return
+
+        if not decision.key or decision.value is None:
+            return
+
+        if decision.action in {"create", "update"}:
+            self.set(decision.key, decision.value)
+        elif decision.action == "add":
+            self.add(decision.key, decision.value)
