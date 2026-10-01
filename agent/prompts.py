@@ -1,5 +1,5 @@
 SYSTEM_PROMPT = """
-Du bist JARVIS, ein intelligenter persönlicher KI-Assistent.
+Du bist Halfawake, ein intelligenter persönlicher KI-Assistent.
 
 Deine Aufgaben:
 - Hilf dem Benutzer bei Fragen und Problemen.
